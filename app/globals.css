@@ -1,26 +1,223 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   DevFlow AI — Design Tokens
+   ----------------------------------------------------------------------------
+   THE COLOR LAW (enforced here, obeyed everywhere):
+     • INDIGO  = the product / the human. Actions, focus, links, selection,
+                 active navigation. This is DevFlow's identity color.
+     • CYAN    = AI, and ONLY AI. Triage, proposals, semantic search, AI cost.
+                 If cyan appears, the machine is acting. It is never a
+                 general-purpose accent. There is deliberately no semantic
+                 token that exposes cyan for non-AI use.
+     • EMERALD = success.   AMBER = warning.   ROSE = destructive.
+
+   ARCHITECTURE (three layers, one direction of dependency):
+     1. RAW PALETTE      — primitive OKLCH values. Never used by components.
+     2. SEMANTIC TOKENS  — meaning, mapped to primitives. Components use ONLY these.
+     3. @theme inline    — exposes semantic tokens to Tailwind as utilities.
+
+   THEMING: dark-first. Dark values live on :root (SSR + no-JS render dark).
+   Light values live under .light, applied explicitly by next-themes.
+============================================================================ */
+
+/* ─── Layer 1: Raw palette ─────────────────────────────────────────────────
+   Primitive values only. If you are reaching for one of these in a component,
+   you are reaching for the wrong layer — use a semantic token below. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Graphite — the neutral spine (dark surfaces + text ramp) */
+  --graphite-950: oklch(16.8% 0.004 264.4); /* page background        */
+  --graphite-900: oklch(20.9% 0.009 264.4); /* card / panel surface   */
+  --graphite-850: oklch(24.3% 0.011 260.7); /* raised / popover       */
+  --graphite-800: oklch(26.4% 0.010 268.3); /* hairline border        */
+  --graphite-700: oklch(29.7% 0.012 264.4); /* border, hover state    */
+  --graphite-600: oklch(37.0% 0.013 264.4); /* border, active/strong  */
+  --graphite-400: oklch(64.9% 0.015 262.4); /* muted / hint text      */
+  --graphite-300: oklch(74.0% 0.013 262.4); /* secondary text         */
+  --graphite-100: oklch(92.0% 0.006 262.4); /* primary text (on dark) */
+  --graphite-50:  oklch(97.5% 0.004 262.4); /* highest-contrast text  */
+
+  /* Brand + roles (shared across modes; lightness tuned per surface below) */
+  --indigo-300:  oklch(72.0% 0.150 273.0);
+  --indigo-500:  oklch(60.2% 0.217 273.0); /* PRIMARY — the product   */
+  --indigo-600:  oklch(53.0% 0.215 273.0); /* primary hover           */
+
+  --cyan-300:    oklch(86.0% 0.110 211.5);
+  --cyan-400:    oklch(79.7% 0.134 211.5); /* AI — and only AI        */
+  --cyan-600:    oklch(62.0% 0.120 216.0); /* AI on light surfaces    */
+
+  --emerald-400: oklch(77.3% 0.153 163.2);
+  --emerald-600: oklch(59.0% 0.140 164.0);
+
+  --amber-400:   oklch(83.7% 0.164 84.4);
+  --amber-600:   oklch(68.0% 0.150 70.0);
+
+  --rose-400:    oklch(71.9% 0.169 13.4);
+  --rose-600:    oklch(58.0% 0.180 16.0);
+
+  --white:       oklch(100% 0 0);
 }
 
+/* ─── Layer 2: Semantic tokens (DARK — the default) ────────────────────────
+   Components consume ONLY these. Renaming a primitive never touches a
+   component; re-pointing a semantic token re-themes the whole app. */
+:root {
+  --color-background:        var(--graphite-950);
+  --color-surface:           var(--graphite-900);
+  --color-surface-raised:    var(--graphite-850);
+
+  --color-border:            var(--graphite-800);
+  --color-border-strong:     var(--graphite-700);
+  --color-border-stronger:   var(--graphite-600);
+
+  --color-text:              var(--graphite-100);
+  --color-text-strong:       var(--graphite-50);
+  --color-text-secondary:    var(--graphite-300);
+  --color-text-muted:        var(--graphite-400);
+
+  /* Primary = product/human (INDIGO) */
+  --color-primary:           var(--indigo-500);
+  --color-primary-hover:     var(--indigo-600);
+  --color-primary-fg:        oklch(18% 0.03 273);   /* text on indigo fills */
+  --color-primary-subtle:    oklch(30% 0.09 273);   /* tinted bg for chips  */
+
+  /* AI = machine (CYAN) — the only place cyan is exposed */
+  --color-ai:                var(--cyan-400);
+  --color-ai-hover:          var(--cyan-300);
+  --color-ai-fg:             oklch(20% 0.05 220);   /* text on cyan fills   */
+  --color-ai-subtle:         oklch(30% 0.06 216);   /* tinted AI surfaces   */
+
+  /* Status roles */
+  --color-success:           var(--emerald-400);
+  --color-success-subtle:    oklch(30% 0.06 164);
+  --color-warning:           var(--amber-400);
+  --color-warning-subtle:    oklch(32% 0.06 75);
+  --color-danger:            var(--rose-400);
+  --color-danger-hover:      var(--rose-600);
+  --color-danger-subtle:     oklch(30% 0.07 15);
+
+  /* Focus ring — indigo, because focus is a human action */
+  --color-ring:              var(--indigo-500);
+
+  /* Shape + motion (identity constants) */
+  --radius:                  12px;
+  --radius-sm:               8px;
+  --radius-lg:               16px;
+
+  --ease:                    cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast:           120ms;
+  --duration:                160ms;
+  --duration-slow:           240ms;
+}
+
+/* ─── Layer 2 (LIGHT) — excellent light mode, not an afterthought ──────────
+   Same semantic names, re-pointed. Applied by next-themes via .light so the
+   toggle works and SSR still defaults to dark above. */
+.light {
+  --color-background:        oklch(99.0% 0.002 264);
+  --color-surface:           var(--white);
+  --color-surface-raised:    var(--white);
+
+  --color-border:            oklch(92.5% 0.004 264);
+  --color-border-strong:     oklch(88.0% 0.006 264);
+  --color-border-stronger:   oklch(82.0% 0.008 264);
+
+  --color-text:              oklch(24.0% 0.010 264);
+  --color-text-strong:       oklch(16.0% 0.012 264);
+  --color-text-secondary:    oklch(44.0% 0.012 264);
+  --color-text-muted:        oklch(58.0% 0.013 264);
+
+  --color-primary:           var(--indigo-500);
+  --color-primary-hover:     var(--indigo-600);
+  --color-primary-fg:        var(--white);
+  --color-primary-subtle:    oklch(95.0% 0.03 273);
+
+  --color-ai:                var(--cyan-600);        /* darker cyan for AA on white */
+  --color-ai-hover:          oklch(55.0% 0.120 216);
+  --color-ai-fg:             var(--white);
+  --color-ai-subtle:         oklch(96.0% 0.04 210);
+
+  --color-success:           var(--emerald-600);
+  --color-success-subtle:    oklch(95.0% 0.04 164);
+  --color-warning:           var(--amber-600);
+  --color-warning-subtle:    oklch(96.0% 0.06 80);
+  --color-danger:            var(--rose-600);
+  --color-danger-hover:      oklch(50.0% 0.190 16);
+  --color-danger-subtle:     oklch(96.0% 0.03 15);
+
+  --color-ring:              var(--indigo-500);
+}
+
+/* ─── Layer 3: Expose semantic tokens to Tailwind ──────────────────────────
+   `inline` = utilities resolve to the CSS var, so .dark/.light swaps are live
+   with no rebuild. Enables bg-surface, text-ai, border-primary, etc. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background:      var(--color-background);
+  --color-surface:         var(--color-surface);
+  --color-surface-raised:  var(--color-surface-raised);
+
+  --color-border:          var(--color-border);
+  --color-border-strong:   var(--color-border-strong);
+  --color-border-stronger: var(--color-border-stronger);
+
+  --color-text:            var(--color-text);
+  --color-text-strong:     var(--color-text-strong);
+  --color-text-secondary:  var(--color-text-secondary);
+  --color-text-muted:      var(--color-text-muted);
+
+  --color-primary:         var(--color-primary);
+  --color-primary-hover:   var(--color-primary-hover);
+  --color-primary-fg:      var(--color-primary-fg);
+  --color-primary-subtle:  var(--color-primary-subtle);
+
+  --color-ai:              var(--color-ai);
+  --color-ai-hover:        var(--color-ai-hover);
+  --color-ai-fg:           var(--color-ai-fg);
+  --color-ai-subtle:       var(--color-ai-subtle);
+
+  --color-success:         var(--color-success);
+  --color-success-subtle:  var(--color-success-subtle);
+  --color-warning:         var(--color-warning);
+  --color-warning-subtle:  var(--color-warning-subtle);
+  --color-danger:          var(--color-danger);
+  --color-danger-hover:    var(--color-danger-hover);
+  --color-danger-subtle:   var(--color-danger-subtle);
+
+  --color-ring:            var(--color-ring);
+
+  --radius:                var(--radius);
+  --radius-sm:             var(--radius-sm);
+  --radius-lg:             var(--radius-lg);
+
+  --font-sans:             var(--font-geist-sans);
+  --font-mono:             var(--font-geist-mono);
+
+  --ease-brand:            var(--ease);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ─── Base layer ───────────────────────────────────────────────────────────
+   Minimal, token-driven. Page defaults + a branded focus ring so keyboard
+   navigation is first-class from day one. */
+@layer base {
+  * {
+    border-color: var(--color-border);
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
