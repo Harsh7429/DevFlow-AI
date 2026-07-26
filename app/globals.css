@@ -229,6 +229,8 @@
   --input:                 var(--color-border-strong);
   --ring:                  var(--color-ring);
 }
+
+/* ─── Layer 3: Expose semantic tokens to Tailwind ──────────────────────────
    `inline` = utilities resolve to the CSS var, so .dark/.light swaps are live
    with no rebuild. Enables bg-surface, text-ai, border-primary, etc. */
 @theme inline {
