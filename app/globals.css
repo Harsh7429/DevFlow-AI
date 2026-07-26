@@ -1,4 +1,10 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+/* shadcn components resolve their `dark:` variants through this variant.
+   Pointed at OUR theming: dark is the default (:root), .light overrides.
+   We invert shadcn's usual assumption so the color law stays dark-first. */
+@custom-variant dark (&:not(.light *));
 
 /* ============================================================================
    DevFlow AI — Design Tokens
@@ -148,7 +154,81 @@
   --color-ring:              var(--indigo-500);
 }
 
-/* ─── Layer 3: Expose semantic tokens to Tailwind ──────────────────────────
+/* ─── Layer 2.5: shadcn compatibility bridge ───────────────────────────────
+   shadcn/ui components are written against a FIXED set of variable names
+   (--background, --primary, --border, …). This block is the ONLY place those
+   names exist: each points at one of OUR semantic tokens above.
+
+   WHY A BRIDGE, NOT A RENAME:
+     • Our token system stays the single source of truth.
+     • shadcn is a *consumer* of our design system, not its owner.
+     • Ripping out shadcn later = delete this block. Nothing else moves.
+
+   THE COLOR LAW IS PRESERVED AT THIS SEAM:
+     • Cyan (--color-ai) is deliberately NOT bridged. shadcn's vocabulary has
+       no concept of "AI", so cyan never leaks into a generic component.
+       AI-specific components reach for --color-ai directly, by hand.
+     • shadcn's `--primary` maps to OUR indigo — so its default buttons are
+       already on-brand without per-component overrides.
+
+   These are plain custom properties (not @theme) because shadcn reads them as
+   raw vars; the @theme inline block below is what turns OUR tokens into
+   Tailwind utilities. The two systems meet here and nowhere else. */
+:root {
+  --background:            var(--color-background);
+  --foreground:            var(--color-text);
+  --card:                  var(--color-surface);
+  --card-foreground:       var(--color-text);
+  --popover:               var(--color-surface-raised);
+  --popover-foreground:    var(--color-text);
+
+  --primary:               var(--color-primary);          /* indigo = product */
+  --primary-foreground:    var(--color-primary-fg);
+  --secondary:             var(--color-surface-raised);
+  --secondary-foreground:  var(--color-text);
+
+  --muted:                 var(--color-surface-raised);
+  --muted-foreground:      var(--color-text-muted);
+  --accent:                var(--color-surface-raised);
+  --accent-foreground:     var(--color-text-strong);
+
+  --destructive:           var(--color-danger);
+  --destructive-foreground: var(--color-text-strong);
+
+  --border:                var(--color-border);
+  --input:                 var(--color-border-strong);
+  --ring:                  var(--color-ring);             /* indigo focus */
+
+  --radius:                var(--radius);                 /* our 12px, not 0.625rem */
+}
+
+/* Bridge follows the mode: light values re-point to our light tokens.
+   No separate .dark block — dark is :root above, matching dark-first. */
+.light {
+  --background:            var(--color-background);
+  --foreground:            var(--color-text);
+  --card:                  var(--color-surface);
+  --card-foreground:       var(--color-text);
+  --popover:               var(--color-surface-raised);
+  --popover-foreground:    var(--color-text);
+
+  --primary:               var(--color-primary);
+  --primary-foreground:    var(--color-primary-fg);
+  --secondary:             var(--color-surface-raised);
+  --secondary-foreground:  var(--color-text);
+
+  --muted:                 var(--color-surface-raised);
+  --muted-foreground:      var(--color-text-muted);
+  --accent:                var(--color-surface-raised);
+  --accent-foreground:     var(--color-text-strong);
+
+  --destructive:           var(--color-danger);
+  --destructive-foreground: var(--white);
+
+  --border:                var(--color-border);
+  --input:                 var(--color-border-strong);
+  --ring:                  var(--color-ring);
+}
    `inline` = utilities resolve to the CSS var, so .dark/.light swaps are live
    with no rebuild. Enables bg-surface, text-ai, border-primary, etc. */
 @theme inline {
@@ -193,6 +273,26 @@
   --font-mono:             var(--font-geist-mono);
 
   --ease-brand:            var(--ease);
+
+  /* shadcn utility names → bridge vars (Layer 2.5). Only the names shadcn
+     hardcodes that we DON'T already expose above. The four generic names we
+     share (background, primary, border, ring) are reconciled below this block
+     rather than redefined here, to avoid duplicate keys in @theme. */
+  --color-foreground:             var(--foreground);
+  --color-card:                   var(--card);
+  --color-card-foreground:        var(--card-foreground);
+  --color-popover:                var(--popover);
+  --color-popover-foreground:     var(--popover-foreground);
+  --color-primary-foreground:     var(--primary-foreground);
+  --color-secondary:              var(--secondary);
+  --color-secondary-foreground:   var(--secondary-foreground);
+  --color-muted:                  var(--muted);
+  --color-muted-foreground:       var(--muted-foreground);
+  --color-accent:                 var(--accent);
+  --color-accent-foreground:      var(--accent-foreground);
+  --color-destructive:            var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-input:                  var(--input);
 }
 
 /* ─── Base layer ───────────────────────────────────────────────────────────
